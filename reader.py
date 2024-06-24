@@ -93,13 +93,13 @@ try:
     passwordField.send_keys(WATERKOTTE_PASSWORD)
     loginBttn.click()
 
-    temperaturTab = WebDriverWait(driver, 30).until(
+    temperaturTab = WebDriverWait(driver, 60).until(
         EC.presence_of_element_located((By.ID, temperaturTabId))
     )
     print('Successfully logged in')
     temperaturTab.click();
 
-    averageTempElement = WebDriverWait(driver, 5).until(
+    averageTempElement = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, averageTempId))
     )
 
