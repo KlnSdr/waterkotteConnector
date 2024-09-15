@@ -18,38 +18,15 @@ WATERKOTTE_URL = os.getenv("WATERKOTTE_URL")
 WATERKOTTE_USERNAME = os.getenv("WATERKOTTE_USERNAME")
 WATERKOTTE_PASSWORD = os.getenv("WATERKOTTE_PASSWORD")
 AEOLUS_URL = os.getenv("AEOLUS_URL")
-AEOLUS_USERNAME = os.getenv("AEOLUS_USERNAME")
-AEOLUS_PASSWORD = os.getenv("AEOLUS_PASSWORD")
+AEOLUS_ACCESS_TOKEN = os.getenv("AEOLUS_ACCESS_TOKEN")
 CHROME_DRIVER_PATH = os.getenv("CHROME_DRIVER_PATH")
 PAGE_LOAD_TIMEOUT = os.getenv("PAGE_LOAD_TIMEOUT")
 
-if WATERKOTTE_URL is None or WATERKOTTE_USERNAME is None or WATERKOTTE_PASSWORD is None or AEOLUS_URL is None or AEOLUS_USERNAME is None or AEOLUS_PASSWORD is None or CHROME_DRIVER_PATH is None or PAGE_LOAD_TIMEOUT is None:
+if WATERKOTTE_URL is None or WATERKOTTE_USERNAME is None or WATERKOTTE_PASSWORD is None or AEOLUS_URL is None or AEOLUS_ACCESS_TOKEN is None or CHROME_DRIVER_PATH is None or PAGE_LOAD_TIMEOUT is None:
     raise RuntimeError("config incomplete/missing")
 
 # =========================================================
-
-def doLogin(username, password, url):
-    data = {
-        "displayName": username,
-        "password": password
-    }
-    json_data = json.dumps(data)
-    headers = {
-        "Content-Type": "application/json"
-    }
-    response = requests.post(url, data=json_data, headers=headers)
-
-    if response.status_code != 200:
-        raise RuntimeError("Could not login Aeolus")
-    fullSessionHeader = response.headers["set-cookie"].split("DOBBY_SESSION=")
-
-    if len(fullSessionHeader) != 2:
-        raise ValueError("No session ID sent back")
-
-    sid = fullSessionHeader[1].split(";")[0]
-    return sid
-
-def uploadReading(date, value, url, sid):
+def uploadReading(date, value, url, accessToken):
     data = {
         "date": date,
         "value": value
@@ -57,9 +34,9 @@ def uploadReading(date, value, url, sid):
     json_data = json.dumps(data)
     headers = {
         "Content-Type": "application/json",
-        "cookie": "DOBBY_SESSION=" + sid
+        "Hades-Login-Token": accessToken
     }
-    response = requests.post(url, data=json_data, headers=headers)
+    response = requests.post(url + "/rest/readings", data=json_data, headers=headers)
 
     if response.status_code != 201:
         raise RuntimeError("Could not upload reading")
@@ -116,8 +93,7 @@ try:
 
     print(formatted_date + ": " + averageTemp + "°C")
 
-    sid = doLogin(AEOLUS_USERNAME, AEOLUS_PASSWORD, AEOLUS_URL + "/rest/users/login")
-    uploadReading(formatted_date, averageTemp, AEOLUS_URL + "/rest/readings", sid)
+    uploadReading(formatted_date, averageTemp, AEOLUS_URL, AEOLUS_ACCESS_TOKEN)
     
 finally:
     driver.quit()
